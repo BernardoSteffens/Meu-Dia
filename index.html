@@ -9,14 +9,29 @@
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style> html,body,#root{height:100%} body{margin:0;background:#fafaf9} </style>
+  <script>
+    // 1) Mostra qualquer erro na tela (em vez de tela branca)
+    window.__err = function (msg) {
+      var r = document.getElementById("root");
+      if (r) r.innerHTML =
+        '<pre style="white-space:pre-wrap;padding:16px;margin:0;font:13px/1.5 ui-monospace,monospace;color:#b91c1c">'
+        + "Falha ao iniciar:\n\n" + msg + "</pre>";
+    };
+    window.addEventListener("error", function (e) {
+      window.__err((e.message || "erro") + "\n" + (e.filename || "") + ":" + (e.lineno || "") + ":" + (e.colno || ""));
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      window.__err("Promise rejeitada: " + ((e.reason && e.reason.message) || e.reason));
+    });
+    // 2) Remove service worker e caches antigos (uma versao quebrada pode ter ficado presa)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+    }
+    if (window.caches) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }); }
+  </script>
 </head>
 <body>
   <div id="root"></div>
   <script src="./app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
-    }
-  </script>
 </body>
 </html>
